@@ -66,7 +66,7 @@ def prepare():
     net = Net().to(DEVICE)
     return train_data, test_data, net
 
-def main(train_data, test_data, net):
+def train(train_data, test_data, net):
     # 测试网络的初始精度
     print("initial accuracy:", evaluate(test_data, net))
 
@@ -114,5 +114,5 @@ def test(test_data, net):
 
 if __name__ == "__main__":
     train_data, test_data, net=prepare()
-    main(train_data, test_data, net)
-    test(test_data, net)
+    train(train_data, test_data, net)
+    # test(test_data, net)
