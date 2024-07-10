@@ -104,7 +104,9 @@ def test(test_data, net):
         if n > 3:
             break
         images = images.to(DEVICE) # 从CPU放到GPU
-        predict = torch.argmax(net.forward(images[0].view(-1, 28*28)))
+        inputs = images[0].view(-1, 28*28)
+        outputs = net.forward(inputs)
+        predict = torch.argmax(outputs)
         plt.figure(n)
         image = images[0]
         image = image.cpu() # 从GPU放回CPU
