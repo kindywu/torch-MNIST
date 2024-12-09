@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -123,5 +124,10 @@ def test(test_data, net):
 
 if __name__ == "__main__":
     train_data, test_data, net = prepare()
-    train(train_data, test_data, net)
+    if os.path.exists("net.pth"):
+        net.load_state_dict(torch.load("net.pth", weights_only=True))
+    else:
+        train(train_data, test_data, net)
+
+    torch.save(net.state_dict(), "net.pth")
     test(test_data, net)
