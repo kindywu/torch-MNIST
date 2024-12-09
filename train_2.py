@@ -1,18 +1,20 @@
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # 添加这行，设置后端为Agg
 
 
-BATCH_SIZE = 2048  
-EPOCHS = 20  
+BATCH_SIZE = 2048
+EPOCHS = 20
 DEVICE = torch.device("cuda" if torch.cuda.is_available()
-                      else "cpu")  
+                      else "cpu")
 
-print("DEVICE:",DEVICE,"BATCH_SIZE:",BATCH_SIZE,"EPOCHS:",EPOCHS)
+print("DEVICE:", DEVICE, "BATCH_SIZE:", BATCH_SIZE, "EPOCHS:", EPOCHS)
 
 
 class Net(nn.Module):
@@ -43,12 +45,12 @@ def get_data_loader(is_train):
 def evaluate(test_data, net):
     n_correct = 0
     n_total = 0
-    with torch.no_grad(): #使用 PyTorch 的 torch.no_grad() 上下文管理器。这是为了确保在评估模型时不会计算梯度，从而节省内存并提高速度。因为在测试或评估阶段，我们不需要反向传播来更新模型的权重
+    with torch.no_grad():  # 使用 PyTorch 的 torch.no_grad() 上下文管理器。这是为了确保在评估模型时不会计算梯度，从而节省内存并提高速度。因为在测试或评估阶段，我们不需要反向传播来更新模型的权重
         for (images, labels) in test_data:
             # print(len(images),len(labels)) # BATCH_SIZE
             images, labels = images.to(DEVICE), labels.to(DEVICE)
-            inputs = images.view(-1, 28*28) # 形状调整为 (-1, 28*28)，满足模型的输入要求
-            outputs = net.forward(inputs) # 预测一批数据
+            inputs = images.view(-1, 28*28)  # 形状调整为 (-1, 28*28)，满足模型的输入要求
+            outputs = net.forward(inputs)  # 预测一批数据
             for i, output in enumerate(outputs):
                 predict = torch.argmax(output)
                 if predict == labels[i]:
@@ -58,6 +60,7 @@ def evaluate(test_data, net):
                 n_total += 1
     return n_correct / n_total
 
+
 def prepare():
     train_data = get_data_loader(is_train=True)
     test_data = get_data_loader(is_train=False)
@@ -65,6 +68,7 @@ def prepare():
     # 创建神经网络
     net = Net().to(DEVICE)
     return train_data, test_data, net
+
 
 def train(train_data, test_data, net):
     # 测试网络的初始精度
@@ -83,7 +87,7 @@ def train(train_data, test_data, net):
         # train_data通常是一个数据加载器（如torch.utils.data.DataLoader），它会生成一批批的图像（images）和对应的标签（labels）。
         for (images, labels) in train_data:
             # 这行代码将图像和标签数据移动到指定的设备（如GPU）上，以便进行加速计算。
-            images, labels = images.to(DEVICE), labels.to(DEVICE) # 放入GPU
+            images, labels = images.to(DEVICE), labels.to(DEVICE)  # 放入GPU
             # 这行代码清除了神经网络net的梯度。在PyTorch中，梯度是累加的，因此在每次新的前向传播和反向传播之前，需要清除旧的梯度。
             optimizer.zero_grad()
             # 这行代码重新整形了图像数据。假设每个图像是28x28像素的，这行代码将其整形为一个长度为28*28的一维向量，并保留批次大小作为第一个维度（由-1表示）。这是神经网络输入层的常见要求。
@@ -98,23 +102,26 @@ def train(train_data, test_data, net):
             optimizer.step()
         print("epoch", epoch, "accuracy:", evaluate(test_data, net))
 
+
 def test(test_data, net):
-     # 测试
+    # 测试
     for (n, (images, _)) in enumerate(test_data):
         if n > 3:
             break
-        images = images.to(DEVICE) # 从CPU放到GPU
+        images = images.to(DEVICE)  # 从CPU放到GPU
         inputs = images[0].view(-1, 28*28)
         outputs = net.forward(inputs)
         predict = torch.argmax(outputs)
         plt.figure(n)
         image = images[0]
-        image = image.cpu() # 从GPU放回CPU
+        image = image.cpu()  # 从GPU放回CPU
         plt.imshow(image.view(28, 28))
         plt.title("prediction: " + str(int(predict)))
-    plt.show()
+        plt.savefig(f"test_image_{n}.png")  # 保存图像为文件，文件名可以根据需求调整
+    # plt.show()  注释掉原来的显示命令
+
 
 if __name__ == "__main__":
-    train_data, test_data, net=prepare()
+    train_data, test_data, net = prepare()
     train(train_data, test_data, net)
-    # test(test_data, net)
+    test(test_data, net)
